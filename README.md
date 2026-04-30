@@ -2,7 +2,20 @@
 
 Static browser client plus a **Cloudflare Worker** that streams Anthropic Messages output for ADR and decision memo drafting.
 
-**Pages (client):** https://yottaverseltd.github.io/labs-ai-agent/
+## Try it on GitHub Pages
+
+**Live shell:** https://yottaverseltd.github.io/labs-ai-agent/
+
+**Prerequisites:** none for loading the page. **Submit** needs a deployed Worker URL plus **`ANTHROPIC_API_KEY`** on that Worker (`npx wrangler secret put ANTHROPIC_API_KEY`). After first deploy, set repository variable **`WORKER_PUBLIC_URL`** (no trailing slash) so Actions rewrites `client/config.json` and `window.__WORKER_BASE__` on each Pages build.
+
+### Example context (paste into the page)
+
+```
+Goals: REST migration for inventory microservice.
+Constraints: 6-month window; Oracle retained read-only 90 days.
+Stakeholders: Ops (risk-averse), Product (speed).
+Timeline: discovery done; pick auth and deployment target this sprint.
+```
 
 **Source:** https://github.com/yottaverseltd/labs-ai-agent
 
@@ -18,7 +31,7 @@ Optional repository variable **`WORKER_PUBLIC_URL`** (no trailing slash) lets th
 
 ## Architecture (short)
 
-Browser on GitHub Pages loads `index.html` under `/labs-ai-agent/`. The page resolves the Worker base from `window.__WORKER_BASE__`, then `client/config.json`, then `localStorage` key `labs_ai_worker_base`. Submit sends `POST {workerBase}/v1/draft` with JSON context. The Worker validates Origin against `https://yottaverseltd.github.io` or `http://localhost:*`, attaches the shared system prompt, calls Anthropic Messages with `stream: true`, and pipes bytes back. The browser parses SSE frames and appends text into the output pane.
+Browser on GitHub Pages loads `index.html` under `/labs-ai-agent/`. The page resolves the Worker base from `window.__WORKER_BASE__`, then `client/config.json`, then `localStorage` key `labs_ai_worker_base`. Submit sends `POST {workerBase}/v1/draft` with JSON context. The Worker validates Origin against `https://yottaverseltd.github.io`, optional comma-separated **`ALLOWED_ORIGINS`** in Wrangler vars, or `http://localhost:*`, attaches the shared system prompt, calls Anthropic Messages with `stream: true`, and pipes bytes back. The browser parses SSE frames and appends text into the output pane.
 
 Request bodies are not logged by the Worker.
 

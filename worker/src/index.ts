@@ -3,6 +3,8 @@ import { Hono } from "hono";
 type Env = {
   ANTHROPIC_API_KEY: string;
   ANTHROPIC_MODEL?: string;
+  /** Comma-separated extra allowed browser Origins for CORS (e.g. custom GitHub Pages domain). */
+  ALLOWED_ORIGINS?: string;
 };
 
 /**
@@ -25,10 +27,22 @@ Rules:
 - If information is missing, say so under Open Questions rather than inventing facts.
 - Recommendation must be actionable and scoped to what the context supports.`;
 
-function corsHeaders(origin: string | undefined): Record<string, string> {
+function extraAllowedOrigins(env: Env): Set<string> {
+  const raw = env.ALLOWED_ORIGINS ?? "";
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
+}
+
+function corsHeaders(origin: string | undefined, env: Env): Record<string, string> {
   const o = origin ?? "";
+  const extras = extraAllowedOrigins(env);
   const allowed =
     o === "https://yottaverseltd.github.io" ||
+    extras.has(o) ||
     /^http:\/\/localhost(?::\d+)?$/i.test(o);
   if (!allowed) {
     return {};
@@ -44,7 +58,7 @@ function corsHeaders(origin: string | undefined): Record<string, string> {
 const app = new Hono<{ Bindings: Env }>();
 
 app.options("/v1/draft", (c) => {
-  const h = corsHeaders(c.req.header("Origin"));
+  const h = corsHeaders(c.req.header("Origin"), c.env);
   if (!h["Access-Control-Allow-Origin"]) {
     return new Response(null, { status: 403 });
   }
@@ -60,7 +74,7 @@ app.get("/", (c) => {
 
 app.post("/v1/draft", async (c) => {
   const origin = c.req.header("Origin");
-  const ch = corsHeaders(origin);
+  const ch = corsHeaders(origin, c.env);
   if (!ch["Access-Control-Allow-Origin"]) {
     return new Response(JSON.stringify({ error: "Origin not allowed" }), {
       status: 403,
