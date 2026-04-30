@@ -1,0 +1,66 @@
+name: Deploy GitHub Pages (client)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-labs-ai-agent
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Inject worker base URL (optional)
+        if: ${{ vars.WORKER_PUBLIC_URL != '' }}
+        working-directory: client
+        env:
+          WORKER_PUBLIC_URL: ${{ vars.WORKER_PUBLIC_URL }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const url = process.env.WORKER_PUBLIC_URL.trim().replace(/\/+$/, '');
+          const p = 'config.json';
+          const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+          j.workerBase = url;
+          fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
+          NODE
+
+      - name: Inject window worker base (optional)
+        if: ${{ vars.WORKER_PUBLIC_URL != '' }}
+        working-directory: client
+        env:
+          WORKER_PUBLIC_URL: ${{ vars.WORKER_PUBLIC_URL }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const url = process.env.WORKER_PUBLIC_URL.trim().replace(/\/+$/, '');
+          let html = fs.readFileSync('index.html', 'utf8');
+          html = html.replace(
+            /window\.__WORKER_BASE__\s*=\s*window\.__WORKER_BASE__\s*\|\|\s*"";/,
+            `window.__WORKER_BASE__ = window.__WORKER_BASE__ || ${JSON.stringify(url)};`
+          );
+          fs.writeFileSync('index.html', html);
+          NODE
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

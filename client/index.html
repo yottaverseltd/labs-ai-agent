@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ADR draft helper</title>
+    <base href="./" />
+    <style>
+      :root {
+        font-family: system-ui, Segoe UI, Roboto, sans-serif;
+        color: #0f172a;
+        background: #f8fafc;
+        line-height: 1.45;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 960px;
+        padding: 1.25rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 0.75rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 160px;
+        padding: 0.65rem;
+        font: inherit;
+        box-sizing: border-box;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin: 0.6rem 0;
+      }
+      button {
+        font: inherit;
+        padding: 0.45rem 0.85rem;
+        border-radius: 8px;
+        border: 1px solid #64748b;
+        background: #e2e8f0;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #0f766e;
+        color: #ecfdf5;
+        border-color: #0f766e;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      #out {
+        white-space: pre-wrap;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.75rem;
+        min-height: 200px;
+        background: #fff;
+      }
+      #promptPanel {
+        display: none;
+        margin-top: 0.75rem;
+        padding: 0.65rem;
+        border: 1px dashed #94a3b8;
+        border-radius: 8px;
+        background: #f1f5f9;
+        white-space: pre-wrap;
+        font-size: 0.9rem;
+      }
+      label.toggle {
+        display: inline-flex;
+        gap: 0.35rem;
+        align-items: center;
+        cursor: pointer;
+      }
+      .hint {
+        font-size: 0.85rem;
+        color: #475569;
+      }
+      .warn {
+        color: #b45309;
+        font-size: 0.9rem;
+      }
+    </style>
+    <script>
+      window.__WORKER_BASE__ = window.__WORKER_BASE__ || "";
+    </script>
+  </head>
+  <body>
+    <h1>ADR / decision memo drafter</h1>
+    <p class="hint">
+      Paste context below. The worker streams Markdown back. Configure the worker URL in
+      <code>config.json</code>, build injection, or localStorage key
+      <code>labs_ai_worker_base</code>.
+    </p>
+    <textarea
+      id="ctx"
+      placeholder="Paste plain-text context: goals, constraints, stakeholders, timeline..."
+      aria-label="Decision context"
+    ></textarea>
+    <div class="row">
+      <button type="button" class="primary" id="go">Submit</button>
+      <button type="button" id="abort" disabled>Abort</button>
+      <button type="button" id="download" disabled>Download .md</button>
+      <button type="button" id="reset">Reset</button>
+      <label class="toggle"
+        ><input type="checkbox" id="showPrompt" /> Show system prompt</label
+      >
+    </div>
+    <p id="status" class="hint" aria-live="polite"></p>
+    <p id="workerWarn" class="warn" hidden></p>
+    <div id="out" aria-live="polite"></div>
+    <div id="promptPanel" aria-hidden="true"></div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
