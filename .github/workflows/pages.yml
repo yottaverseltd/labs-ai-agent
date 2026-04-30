@@ -26,34 +26,33 @@ jobs:
         with:
           enablement: true
 
-      - name: Inject worker base URL (optional)
-        if: ${{ vars.WORKER_PUBLIC_URL != '' }}
+      # Always rewrite client/config.json so deploy artifacts are predictable.
+      # Prefer repository Variable WORKER_PUBLIC_URL; optional Secret WORKER_PUBLIC_URL if you prefer not to expose the worker URL as a variable.
+      - name: Write worker base into config and index
         working-directory: client
         env:
-          WORKER_PUBLIC_URL: ${{ vars.WORKER_PUBLIC_URL }}
+          WORKER_FROM_VARS: ${{ vars.WORKER_PUBLIC_URL }}
+          WORKER_FROM_SECRETS: ${{ secrets.WORKER_PUBLIC_URL }}
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const url = process.env.WORKER_PUBLIC_URL.trim().replace(/\/+$/, '');
+          const fromVar = (process.env.WORKER_FROM_VARS || '').trim();
+          const fromSecret = (process.env.WORKER_FROM_SECRETS || '').trim();
+          const raw = fromVar || fromSecret;
+          const url = raw ? raw.replace(/\/+$/, '') : '';
+
           const p = 'config.json';
           const j = JSON.parse(fs.readFileSync(p, 'utf8'));
           j.workerBase = url;
           fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
-          NODE
 
-      - name: Inject window worker base (optional)
-        if: ${{ vars.WORKER_PUBLIC_URL != '' }}
-        working-directory: client
-        env:
-          WORKER_PUBLIC_URL: ${{ vars.WORKER_PUBLIC_URL }}
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const url = process.env.WORKER_PUBLIC_URL.trim().replace(/\/+$/, '');
           let html = fs.readFileSync('index.html', 'utf8');
+          const replacement = url
+            ? `window.__WORKER_BASE__ = window.__WORKER_BASE__ || ${JSON.stringify(url)};`
+            : 'window.__WORKER_BASE__ = window.__WORKER_BASE__ || "";';
           html = html.replace(
             /window\.__WORKER_BASE__\s*=\s*window\.__WORKER_BASE__\s*\|\|\s*"";/,
-            `window.__WORKER_BASE__ = window.__WORKER_BASE__ || ${JSON.stringify(url)};`
+            replacement
           );
           fs.writeFileSync('index.html', html);
           NODE

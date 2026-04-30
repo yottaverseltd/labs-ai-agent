@@ -185,7 +185,7 @@ async function main() {
   const base = await resolveWorkerBase();
   if (!base) {
     showWorkerWarning(
-      "Set worker URL: edit client/config.json after deploy, inject window.__WORKER_BASE__, or localStorage labs_ai_worker_base.",
+      "No worker URL: set GitHub Actions variable WORKER_PUBLIC_URL (full origin, no trailing slash) and re-run Deploy Pages, or use localStorage key labs_ai_worker_base for local testing.",
     );
   } else {
     showWorkerWarning("");

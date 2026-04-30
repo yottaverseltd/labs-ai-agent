@@ -6,7 +6,11 @@ Static browser client plus a **Cloudflare Worker** that streams Anthropic Messag
 
 **Live shell:** https://yottaverseltd.github.io/labs-ai-agent/
 
-**Prerequisites:** none for loading the page. **Submit** needs a deployed Worker URL plus **`ANTHROPIC_API_KEY`** on that Worker (`npx wrangler secret put ANTHROPIC_API_KEY`). After first deploy, set repository variable **`WORKER_PUBLIC_URL`** (no trailing slash) so Actions rewrites `client/config.json` and `window.__WORKER_BASE__` on each Pages build.
+**Prerequisites:** none for loading the page. **Submit** needs a deployed Worker URL plus **`ANTHROPIC_API_KEY`** on that Worker (`npx wrangler secret put ANTHROPIC_API_KEY`).
+
+**Configure the hosted client:** In the GitHub repo, open **Settings → Secrets and variables → Actions → Variables**. Add **`WORKER_PUBLIC_URL`** with the full Worker origin only (example: `https://labs-ai-agent.your-account.workers.dev`, **no trailing slash**). Push to `main` or run the **Deploy GitHub Pages** workflow manually so the build step writes `workerBase` into `client/config.json` and injects `window.__WORKER_BASE__`. If you prefer the URL not to appear under Variables, define the same name as a **repository secret** instead; the workflow accepts either.
+
+Without **`WORKER_PUBLIC_URL`**, the live site still loads but shows a warning and **Submit** reports **Missing worker base URL** until you set the variable (or secret) and redeploy Pages.
 
 ### Example context (paste into the page)
 
@@ -21,7 +25,7 @@ Timeline: discovery done; pick auth and deployment target this sprint.
 
 **Worker URL:** set only after you deploy. The Worker will not answer authenticated streaming without **`ANTHROPIC_API_KEY`** in the Worker environment (Wrangler: `npx wrangler secret put ANTHROPIC_API_KEY`). Without that secret, public "Live" still loads the shell, but Submit cannot stream model output.
 
-Optional repository variable **`WORKER_PUBLIC_URL`** (no trailing slash) lets the GitHub Actions Pages workflow rewrite `client/config.json` and `window.__WORKER_BASE__` so the hosted client points at your deployed Worker.
+Repository **variable** or **secret** **`WORKER_PUBLIC_URL`** (full origin, no trailing slash) is applied on every Pages build to `client/config.json` and `index.html` injection.
 
 ## What ships
 
